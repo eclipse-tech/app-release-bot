@@ -1,30 +1,29 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const axios = require("axios");
+const { App } = require("@slack/bolt");
 
-const app = express();
-const port = 3000; // Change this port to your desired port number
-
-// Your Slack app's signing secret
 const slackSigningSecret = "4d6408fe92876e058b99c2c167d68752";
+const botToken = "xoxb-3538898510899-5626259179239-JEZfvkoYyXi7R3PmO85Yy85n";
+const appToken =
+  "xapp-1-A05JN0K0G1L-5640772067106-e8813926d4d84b4c9e17087e71c433e491e3ab879b33074606688e5e1d56aa59";
 
-// Your Slack bot token
-const botToken =
-  "xoxb-3538898510899-5626259179239-8CTgPcoXCtCv6eJZkXtfqJ42";
+const app = new App({
+  token: botToken,
+  signingSecret: slackSigningSecret,
+  appToken,
+  socketMode: true,
+  port: process.env.PORT || 3000,
+});
 
-app.use(bodyParser.urlencoded({ extended: true }));
+const { WebClient, LogLevel } = require("@slack/web-api");
 
-// Route to handle /release-web-app command
-app.post("/slack/command", (req, res) => {
-  const { token, text, user_id, user_name } = req.body;
+// WebClient instantiates a client that can call API methods
+// When using Bolt, you can use either `app.client` or the `client` passed to listeners.
+const client = new WebClient(botToken, {
+  // LogLevel can be imported and used to make debugging simpler
+  logLevel: LogLevel.DEBUG,
+});
 
-  // Verify the request is coming from Slack
-  if (token !== slackSigningSecret) {
-    return res.status(401).send("Unauthorized");
-  }
-
-  // Create checklists for Design Team, Product Team, Localization Team
-  const payload = [
+function createReleaseTextBlock(text) {
+  const block = [
     {
       type: "section",
       text: {
@@ -62,86 +61,86 @@ app.post("/slack/command", (req, res) => {
           options: [
             {
               text: {
-                type: "plain_text",
-                text: "Design Team",
-                emoji: true,
+                type: "mrkdwn",
+                text: "*Design Team*",
+                // emoji: true,
               },
               value: "design",
             },
             {
               text: {
-                type: "plain_text",
-                text: "Product Team",
-                emoji: true,
+                type: "mrkdwn",
+                text: "*Product Team*",
+                // emoji: true,
               },
               value: "product",
             },
             {
               text: {
-                type: "plain_text",
-                text: "Test Engineering Team", //<@U04EAF9HWKH> <@U04TLGT3GRH>
-                emoji: true,
+                type: "mrkdwn",
+                text: "*Test Engineering Team*", //<@U04EAF9HWKH> <@U04TLGT3GRH>
+                // emoji: true,
               },
               value: "test-engineer",
             },
             {
               text: {
-                type: "plain_text",
-                text: "Translation Team",
-                emoji: true,
+                type: "mrkdwn",
+                text: "*Translation Team*",
+                // emoji: true,
               },
               value: "translation",
             },
           ],
+          action_id: "app-verification-select",
         },
       ],
     },
   ];
-  // Send the checklist message
-  sendSlackMessage("#deploy-notifier", JSON.stringify(payload));
 
-  res.send(`Command received: ${text}`);
+  return block;
+}
+
+// When we initiate release command
+app.command("/release-web-app", async ({ command, ack }) => {
+  await ack();
+  await sendMessagetoChannel("C05KDRCEUGZ", {
+    blocks: createReleaseTextBlock(command.text),
+  });
 });
 
-// Route to handle interactive messages (checklist button clicks)
-app.post("/slack/interactions", (req, res) => {
-  const payload = JSON.parse(req.body.payload);
-  console.log(payload);
-  // Check if the action is from a checklist button
-  if (payload.type === "block_actions" && payload.actions.length > 0) {
-    const value = payload.actions[0].value;
+// When user selects the checkbox
+app.action("app-verification-select", async ({ body, ack }) => {
+  await ack();
+  const allValues = ["product", "design", "test-engineer", "translation"];
 
-    // Notify @minkesh when all checklists are checked
-    if (value === "design" || value === "product" || value === "localization") {
-      const checklistCompleteMessage = `All checklists for *${value}* are checked!`;
-      sendSlackMessage("@minkesh", checklistCompleteMessage);
-    }
+  if (checkAllApproved(body.actions[0].selected_options, allValues)) {
+    await sendMessagetoChannel("C05KDRCEUGZ", {
+      text: "<@U040TPD5308> All the verification are submitted, production deployment is a go!!! :rocket:",
+    });
   }
-
-  res.send();
 });
+
+const checkAllApproved = (selectedOptions, allValues) => {
+  const selectedValues = selectedOptions.map((optn) => optn.value);
+  return allValues.every((item) => selectedValues.includes(item));
+};
+
+(async () => {
+  // Start your app
+  await app.start();
+
+  console.log("⚡️ Bolt app is running!");
+})();
 
 // Function to send a message to Slack
-async function sendSlackMessage(channel, message) {
+async function sendMessagetoChannel(channel, messageObj) {
   try {
-    await axios.post(
-      "https://slack.com/api/chat.postMessage",
-      {
-        channel,
-        blocks: message,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${botToken}`,
-        },
-      }
-    );
+    await client.chat.postMessage({
+      channel,
+      ...messageObj,
+    });
   } catch (err) {
     console.error(err);
   }
 }
-
-// Start the server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
