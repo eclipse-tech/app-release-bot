@@ -1,9 +1,9 @@
 const { App } = require("@slack/bolt");
 
 const slackSigningSecret = "4d6408fe92876e058b99c2c167d68752";
-const botToken = "xoxb-3538898510899-5626259179239-JEZfvkoYyXi7R3PmO85Yy85n";
+const botToken = "xoxb-3538898510899-5626259179239-04UQCibXIorZxgl5VBfrG8ay";
 const appToken =
-  "xapp-1-A05JN0K0G1L-5640772067106-e8813926d4d84b4c9e17087e71c433e491e3ab879b33074606688e5e1d56aa59";
+  "xapp-1-A05JN0K0G1L-5661381835601-58629c9299acd3c2ecb323bf355bf4ffd4bba23a0b0e01b1eeb6a06a6e94dd85";
 
 const app = new App({
   token: botToken,
