@@ -10,7 +10,7 @@ const slackSigningSecret = "4d6408fe92876e058b99c2c167d68752";
 
 // Your Slack bot token
 const botToken =
-  "xoxb-3538898510899-5626259179239-94s4OuTntV3l8xfGkR0qX0Kj";
+  "xoxb-3538898510899-5626259179239-8CTgPcoXCtCv6eJZkXtfqJ42";
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
