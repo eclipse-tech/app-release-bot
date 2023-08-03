@@ -1,9 +1,10 @@
 const { App } = require("@slack/bolt");
+const { WebClient, LogLevel } = require("@slack/web-api");
 
 const slackSigningSecret = "4d6408fe92876e058b99c2c167d68752";
-const botToken = "xoxb-3538898510899-5626259179239-04UQCibXIorZxgl5VBfrG8ay";
+const botToken = "xoxb-3538898510899-5626259179239-vQIX92nC9JsTIk2gb9guqtEM";
 const appToken =
-  "xapp-1-A05JN0K0G1L-5661381835601-58629c9299acd3c2ecb323bf355bf4ffd4bba23a0b0e01b1eeb6a06a6e94dd85";
+  "xapp-1-A05JN0K0G1L-5661679861730-99fdddf1b7be87072b6f916fb2a43d4352993db0a7556ec9ce3c1afd22f115fc";
 
 const app = new App({
   token: botToken,
@@ -12,8 +13,6 @@ const app = new App({
   socketMode: true,
   port: process.env.PORT || 3000,
 });
-
-const { WebClient, LogLevel } = require("@slack/web-api");
 
 // WebClient instantiates a client that can call API methods
 // When using Bolt, you can use either `app.client` or the `client` passed to listeners.
