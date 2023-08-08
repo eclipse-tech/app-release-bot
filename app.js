@@ -1,22 +1,19 @@
-const { App } = require("@slack/bolt");
+const { App, AwsLambdaReceiver } = require('@slack/bolt');
 const { WebClient, LogLevel } = require("@slack/web-api");
 
-const slackSigningSecret = "4d6408fe92876e058b99c2c167d68752";
-const botToken = "xoxb-3538898510899-5626259179239-vQIX92nC9JsTIk2gb9guqtEM";
-const appToken =
-  "xapp-1-A05JN0K0G1L-5661679861730-99fdddf1b7be87072b6f916fb2a43d4352993db0a7556ec9ce3c1afd22f115fc";
+// Initialize your custom receiver
+const awsLambdaReceiver = new AwsLambdaReceiver({
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
+});
 
 const app = new App({
-  token: botToken,
-  signingSecret: slackSigningSecret,
-  appToken,
-  socketMode: true,
-  port: process.env.PORT || 3000,
+  token: process.env.SLACK_BOT_TOKEN,
+  receiver: awsLambdaReceiver
 });
 
 // WebClient instantiates a client that can call API methods
 // When using Bolt, you can use either `app.client` or the `client` passed to listeners.
-const client = new WebClient(botToken, {
+const client = new WebClient(process.env.SLACK_BOT_TOKEN, {
   // LogLevel can be imported and used to make debugging simpler
   logLevel: LogLevel.DEBUG,
 });
@@ -102,6 +99,7 @@ function createReleaseTextBlock(text) {
 
 // When we initiate release command
 app.command("/release-web-app", async ({ command, ack }) => {
+  console.log("RELEASE WEB APP HANDLER");
   await ack();
   await sendMessagetoChannel("C05KDRCEUGZ", {
     blocks: createReleaseTextBlock(command.text),
@@ -125,13 +123,6 @@ const checkAllApproved = (selectedOptions, allValues) => {
   return allValues.every((item) => selectedValues.includes(item));
 };
 
-(async () => {
-  // Start your app
-  await app.start();
-
-  console.log("⚡️ Bolt app is running!");
-})();
-
 // Function to send a message to Slack
 async function sendMessagetoChannel(channel, messageObj) {
   try {
@@ -142,4 +133,10 @@ async function sendMessagetoChannel(channel, messageObj) {
   } catch (err) {
     console.error(err);
   }
+}
+
+// Handle the Lambda function event
+module.exports.handler = async (event, context, callback) => {
+  const handler = await awsLambdaReceiver.start();
+  return handler(event, context, callback);
 }
