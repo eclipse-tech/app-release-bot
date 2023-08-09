@@ -2,10 +2,7 @@
   "name": "slack-release-app",
   "version": "1.0.0",
   "description": "A Slack app for release notifications and checklists",
-  "main": "index.js",
-  "scripts": {
-    "start": "node src/index.js"
-  },
+  "main": "app.js",
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {

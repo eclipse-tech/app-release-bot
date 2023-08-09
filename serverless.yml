@@ -1,8 +1,10 @@
-service: serverless-bolt-js
+service: release-web-app-bot
 frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs14.x
+  region: ap-south-1
+  stackName: release-web-app-bot
   environment:
     SLACK_SIGNING_SECRET: ${env:SLACK_SIGNING_SECRET}
     SLACK_BOT_TOKEN: ${env:SLACK_BOT_TOKEN}

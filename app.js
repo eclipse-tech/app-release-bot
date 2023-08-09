@@ -1,5 +1,6 @@
-const { App, AwsLambdaReceiver } = require('@slack/bolt');
+const { App, AwsLambdaReceiver } = require("@slack/bolt");
 const { WebClient, LogLevel } = require("@slack/web-api");
+const { createReleaseTextBlock } = require("./block-helper");
 
 // Initialize your custom receiver
 const awsLambdaReceiver = new AwsLambdaReceiver({
@@ -8,7 +9,7 @@ const awsLambdaReceiver = new AwsLambdaReceiver({
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
-  receiver: awsLambdaReceiver
+  receiver: awsLambdaReceiver,
 });
 
 // WebClient instantiates a client that can call API methods
@@ -18,98 +19,50 @@ const client = new WebClient(process.env.SLACK_BOT_TOKEN, {
   logLevel: LogLevel.DEBUG,
 });
 
-function createReleaseTextBlock(text) {
-  const block = [
-    {
-      type: "section",
-      text: {
-        type: "plain_text",
-        text: "Hi Team, \n \n We have deployed following changes in the uat environment, respective owner please verify the changes and click on the checkbox once verification is complete. If you encounter any bug please add those in this thread itself.",
-        emoji: true,
-      },
-    },
-    {
-      type: "section",
-      text: {
-        type: "plain_text",
-        text: text,
-        emoji: true,
-      },
-    },
-    {
-      type: "divider",
-    },
-    {
-      type: "context",
-      elements: [
-        {
-          type: "plain_text",
-          text: "Release Engineer: Minkesh Jain",
-          emoji: true,
-        },
-      ],
-    },
-    {
-      type: "actions",
-      elements: [
-        {
-          type: "checkboxes",
-          options: [
-            {
-              text: {
-                type: "mrkdwn",
-                text: "*Design Team*",
-                // emoji: true,
-              },
-              value: "design",
-            },
-            {
-              text: {
-                type: "mrkdwn",
-                text: "*Product Team*",
-                // emoji: true,
-              },
-              value: "product",
-            },
-            {
-              text: {
-                type: "mrkdwn",
-                text: "*Test Engineering Team*", //<@U04EAF9HWKH> <@U04TLGT3GRH>
-                // emoji: true,
-              },
-              value: "test-engineer",
-            },
-            {
-              text: {
-                type: "mrkdwn",
-                text: "*Translation Team*",
-                // emoji: true,
-              },
-              value: "translation",
-            },
-          ],
-          action_id: "app-verification-select",
-        },
-      ],
-    },
-  ];
-
-  return block;
-}
-
-// When we initiate release command
+// Initiate release command
 app.command("/release-web-app", async ({ command, ack }) => {
-  console.log("RELEASE WEB APP HANDLER");
   await ack();
   await sendMessagetoChannel("C05KDRCEUGZ", {
     blocks: createReleaseTextBlock(command.text),
   });
 });
 
+// app.command("/add-issue", async ({ ack, body, client, logger }) => {
+//   await ack();
+
+//   await client.views.open({
+//     trigger_id: body.trigger_id,
+//     ...createAddIssueModalBlock("add_issue_cb"),
+//   });
+// });
+
+// app.view("add_issue_cb", async ({ ack, body, view, client, logger }) => {
+//   await ack();
+
+//   const {
+//     issue_title_block: {
+//       issue_title_input: { value: title },
+//     },
+//     issue_desc_block: {
+//       issue_desc_input: { value: desc },
+//     },
+//     issue_type_input_block: {
+//       issue_type: { selected_option: { value: issueType } },
+//     },
+//   } = view["state"]["values"];
+
+// });
+
 // When user selects the checkbox
 app.action("app-verification-select", async ({ body, ack }) => {
   await ack();
-  const allValues = ["product", "design", "test-engineer", "translation"];
+  const allValues = [
+    "product",
+    "design",
+    "test-engineer",
+    "translation",
+    "backend",
+  ];
 
   if (checkAllApproved(body.actions[0].selected_options, allValues)) {
     await sendMessagetoChannel("C05KDRCEUGZ", {
@@ -139,4 +92,4 @@ async function sendMessagetoChannel(channel, messageObj) {
 module.exports.handler = async (event, context, callback) => {
   const handler = await awsLambdaReceiver.start();
   return handler(event, context, callback);
-}
+};
