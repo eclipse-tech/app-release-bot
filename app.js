@@ -7,6 +7,8 @@ const awsLambdaReceiver = new AwsLambdaReceiver({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
 });
 
+const PRODUCT_CHANNEL_ID = "C041Q6SN71P";
+
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   receiver: awsLambdaReceiver,
@@ -22,7 +24,7 @@ const client = new WebClient(process.env.SLACK_BOT_TOKEN, {
 // Initiate release command
 app.command("/release-web-app", async ({ command, ack }) => {
   await ack();
-  await sendMessagetoChannel("C05KDRCEUGZ", {
+  await sendMessagetoChannel(PRODUCT_CHANNEL_ID, {
     blocks: createReleaseTextBlock(command.text),
   });
 });
@@ -65,7 +67,7 @@ app.action("app-verification-select", async ({ body, ack }) => {
   ];
 
   if (checkAllApproved(body.actions[0].selected_options, allValues)) {
-    await sendMessagetoChannel("C05KDRCEUGZ", {
+    await sendMessagetoChannel(PRODUCT_CHANNEL_ID, {
       text: "<@U040TPD5308> All the verification are submitted, production deployment is a go!!! :rocket:",
     });
   }
